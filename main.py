@@ -34,15 +34,19 @@ categorical_cols = [
     "Residence_type",
     "smoking_status"
 ]
-help_texts = [
-    "The average pixel intensity level.", "The variation or spread of intensity levels.",
-    "The square root of Variance, also measuring the spread.", "The degree of randomness or complexity in the image.",
-    "The degree of asymmetry in the intensity distribution.", "The 'peakedness' of the intensity distribution.",
-    "A measure of the local variations between pixels.", "A measure of the uniformity or regularity of a pattern.",
-    "Another name for Energy, measuring uniformity.", "A measure of the texture's smoothness.",
-    "A measure of texture roughness (opposite of Homogeneity).", "A measure of the presence of linear patterns.",
-    "A measure of the scale or 'graininess' of the texture."
-]
+
+feature_descriptions = {
+    "gender": "The gender of the patient (Male or Female).",
+    "age": "Age of the patient in years.",
+    "hypertension": "Whether the patient has hypertension (1 = Yes, 0 = No).",
+    "heart_disease": "Whether the patient has heart disease (1 = Yes, 0 = No).",
+    "ever_married": "Whether the patient has ever been married.",
+    "work_type": "Patient's occupation.",
+    "Residence_type": "Whether the patient lives in an Urban or Rural area.",
+    "avg_glucose_level": "Average blood glucose level.",
+    "bmi": "Body Mass Index.",
+    "smoking_status": "Smoking status."
+}
 
 gender = st.sidebar.selectbox(
     "Gender",
@@ -124,37 +128,50 @@ st.warning("**Disclaimer:** Please consult a doctor for an accurate diagnosis. T
 tab_prediction, tab_attributes, tab_project = st.tabs(["📈 **Prediction Result**", "📚 **Attribute Descriptions**", "ℹ️ **About the Project**"])
 
 with tab_prediction:
-    st.header("Prediction Result from the AI Model")
-    if predict_button:
-        # --- VALIDATION REVISION STARTS HERE ---
-        # Step 1: Create a list of inputs that are still 0.0, EXCEPT for 'Coarseness'
-        empty_columns = [
-            feature_name for feature_name, value in user_inputs.items() 
-            if value == 0.0 and feature_name != 'Coarseness'
-        ]
-        
-        # Step 2: Check if any column (other than Coarseness) is empty
-        if len(empty_columns) > 0:
-            # Step 3: If so, display a warning
-            st.error(f"**Warning:** Please fill in all attributes (except Coarseness) for an accurate prediction. The following attributes are still set to 0.0:", icon="❗")
-            for column in empty_columns:
-                st.markdown(f"- **{column}**")
-        else:
-            # Step 4: If all other columns are filled, run the prediction
-            if model is not None and scaler is not None:
-                input_df = pd.DataFrame({
-                    "gender":[gender],
-                    "age":[age],
-                    "hypertension":[hypertension],
-                    "heart_disease":[heart_disease],
-                    "ever_married":[ever_married],
-                    "work_type":[work_type],
-                    "Residence_type":[Residence_type],
-                    "avg_glucose_level":[avg_glucose_level],
-                    "bmi":[bmi],
-                    "smoking_status":[smoking_status]
 
-                })
+    st.header("Prediction Result from the AI Model")
+
+    if predict_button:
+
+        user_inputs = {
+            "gender": gender,
+            "age": age,
+            "hypertension": hypertension,
+            "heart_disease": heart_disease,
+            "ever_married": ever_married,
+            "work_type": work_type,
+            "Residence_type": Residence_type,
+            "avg_glucose_level": avg_glucose_level,
+            "bmi": bmi,
+            "smoking_status": smoking_status
+        }
+
+        numerical_features = [
+            "age",
+            "avg_glucose_level",
+            "bmi"
+        ]
+
+        empty_columns = [
+            feature
+            for feature, value in user_inputs.items()
+            if feature in numerical_features and value == 0
+        ]
+
+        if empty_columns:
+
+            st.error("Please fill in all required numerical values.")
+
+            for col in empty_columns:
+                st.write(f"• {col}")
+
+        else:
+
+            if model is None:
+                st.error("Model could not be loaded.")
+            else:
+
+                input_df = pd.DataFrame([user_inputs])
 
                 input_df = pd.get_dummies(
                     input_df,
@@ -173,31 +190,43 @@ with tab_prediction:
                 prediction_proba = model.predict_proba(input_scaled)
 
                 if prediction[0] == 1:
-                    st.error("### Result: Stroke Risk Indicated", icon="⚠️")
+                    st.error("## Stroke Risk Detected")
                     confidence = prediction_proba[0][1] * 100
                 else:
-                    st.success("### Result: No Stroke Risk Indicated", icon="✅")
+                    st.success("## No Stroke Risk Detected")
                     confidence = prediction_proba[0][0] * 100
 
-                st.metric(label="Model Confidence Level", value=f"{confidence:.2f}%")
+                st.metric(
+                    "Model Confidence",
+                    f"{confidence:.2f}%"
+                )
+
                 st.progress(int(confidence))
 
-                with st.expander("View Processed Data Details"):
-                    st.write("Initial Input Data:")
+                with st.expander("Processed Input"):
+
+                    st.write("Input after preprocessing")
+
                     st.dataframe(input_df)
-                    st.write("Data After Scaling (as seen by the model):")
-                    st.dataframe(pd.DataFrame(input_scaled, columns=feature_names))
-            else:
-                st.error("Model could not be loaded. Please check your .pkl files.")
-        # --- END OF VALIDATION REVISION ---
+
+                    st.write("Scaled input")
+
+                    st.dataframe(
+                        pd.DataFrame(
+                            input_scaled,
+                            columns=feature_columns
+                        )
+                    )
+
     else:
-        st.info("Please enter all attribute values in the left panel and click the 'Get Prediction' button.")
+
+        st.info("Fill in the form on the left and press **Get Prediction**.")
 
 with tab_attributes:
     st.header("Attribute Glossary")
     st.write("Here are simple descriptions for each attribute used by the model:")
-    for feature, help_text in zip(feature_names, help_texts):
-        st.info(f"**{feature}**: {help_text}")
+    for feature, description in feature_descriptions.items():
+        st.info(f"**{feature.replace('_',' ').title()}**: {description}")
 
 with tab_project:
     st.header("About")
