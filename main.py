@@ -46,7 +46,7 @@ feature_descriptions = {
     "work_type": "Patient's occupation.",
     "Residence_type": "Whether the patient lives in an Urban or Rural area.",
     "avg_glucose_level": "Average blood glucose level.",
-    "bmi": "Body Mass Index.",
+    "BMI": "Body Mass Index.",
     "smoking_status": "Smoking status."
 }
 
