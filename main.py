@@ -16,7 +16,9 @@ def load_files():
         scaler = joblib.load("scaler.pkl")
         feature_columns = joblib.load("feature_columns.pkl")
         return model, scaler, feature_columns
-    except FileNotFoundError:
+
+    except Exception as e:
+        st.error(f"Error loading files: {e}")
         return None, None, None
 
 model, scaler, feature_columns = load_files()
@@ -167,8 +169,8 @@ with tab_prediction:
 
         else:
 
-            if model is None:
-                st.error("Model could not be loaded.")
+            if model is None or scaler is None or feature_columns is None:
+                st.error("Model files could not be loaded.")
             else:
 
                 input_df = pd.DataFrame([user_inputs])
@@ -247,7 +249,7 @@ with tab_project:
                 
     **Sania Rahma Dwita Manoppo**
                 
-    **Nannesa Reinesya** 
+    **Vannesa Reinesya** 
                 
     **Diah Suci**
                 
