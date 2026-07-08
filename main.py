@@ -62,14 +62,21 @@ age = st.sidebar.number_input(
     value=30
 )
 
-hypertension = st.sidebar.selectbox(
-    "Hypertension",
-    [0,1]
-)
+yes_no = {
+    0: "No",
+    1: "Yes"
+}
 
 heart_disease = st.sidebar.selectbox(
     "Heart Disease",
-    [0,1]
+    options=list(yes_no.keys()),
+    format_func=lambda x: yes_no[x]
+)
+
+hypertension = st.sidebar.selectbox(
+    "Hypertension",
+    options=list(yes_no.keys()),
+    format_func=lambda x: yes_no[x]
 )
 
 ever_married = st.sidebar.selectbox(
